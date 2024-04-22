@@ -51,7 +51,7 @@ union () {
       }
     }
   }
-  translate ([0, 120, 0]) {
+  translate ([0, 160, 0]) {
     difference () {
       hull () {
         rotate (a=5.0, v=[1, 0, 0]) {

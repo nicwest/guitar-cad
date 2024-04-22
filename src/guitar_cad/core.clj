@@ -110,7 +110,7 @@
                                 :headstock-height 15 :headstock-tilt-degs 5
                                 :neck-width 60 :neck-height 20
                                :cut-radius 50 })
-         (translate [0 120 0]))
+         (translate [0 160 0]))
     (->> (neck-profile opts [60 20 0] [70 35 400])
          (translate [0 220 0]))))
 
