@@ -2,7 +2,7 @@ translate ([0, 0, -8]) {
   difference () {
     difference () {
       linear_extrude (height=16, center=true){
-        polygon (points=[[-21, 0], [21, 0], [50, 150], [30, 150], [30, 170], [-30, 170], [-30, 150], [-50, 150]]);
+        polygon (points=[[-21, 0], [21, 0], [50, 150], [-50, 150]]);
       }
       translate ([50, 150, ]) {
         resize ([40, 60, 20]){

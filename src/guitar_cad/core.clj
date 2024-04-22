@@ -22,10 +22,6 @@
                           (polygon [[(- topx) 0]
                                     [topx 0]
                                     [bottomx 150]
-                                    [neckx 150]
-                                    [neckx 170]
-                                    [(- neckx) 170]
-                                    [(- neckx) 150]
                                     [(- bottomx) 150]]))
           (translate [bottomx 150]
                      (resize [40 60 20]
@@ -79,40 +75,40 @@
 
 (defn headstock-neck-joint
   [{:keys [joint-width headstock-width headstock-height headstock-tilt-degs
-           neck-width neck-height pretty? cut-radius]}]
+           neck-width neck-height pretty? cut-radius lump-height]}]
   (difference
     (hull
       (->> (cube headstock-width 1 headstock-height)
            (translate [0 0 (- (/ headstock-height 2))])
            (rotate (deg->rads headstock-tilt-degs) [1 0 0]))
       (->> (difference 
-             (cylinder (/ headstock-width 2) 1)
-             (translate [0 (- (/ headstock-width 2)) 0]
+             (cylinder (/ lump-height 2) 1)
+             (translate [0 (- (/ lump-height 2)) 0]
                         (cube headstock-width headstock-width 2)))
            (rotate (deg->rads -90) [1 0 0])
-           (translate [0 (* joint-width 3/5) 0]))
+           (translate [0 (* joint-width 1/5) 0]))
       (->> (neck-profile-base {:pretty? pretty?})
            (resize [neck-width 1 neck-height])
            (translate [0 joint-width 0])))
     (->> (cylinder cut-radius headstock-width)
          (rotate (deg->rads 90) [0 1 0])
-         (translate [0 0 (- 0 cut-radius headstock-height)])))
-  )
+         (translate [0 0 (- 0 cut-radius headstock-height)]))))
 
 (defn neck
   [opts]
   (union
     (->> (headstock opts)
-         (translate [0 -160 0])
+         (translate [0 -150 0])
          (rotate (deg->rads 5) [1 0 0])
-         (translate [0 160 0]))
-    (->> (headstock-neck-joint {:joint-width 60 :headstock-width 60
-                                :headstock-height 15 :headstock-tilt-degs 5
-                                :neck-width 60 :neck-height 20
-                               :cut-radius 50 })
-         (translate [0 160 0]))
+         (translate [0 150 0]))
+    (->> (headstock-neck-joint 
+           {:joint-width 30 :headstock-width 60
+            :headstock-height 16 :headstock-tilt-degs 5
+            :lump-height 50
+            :neck-width 60 :neck-height 20 :cut-radius 15 })
+         (translate [0 150 0]))
     (->> (neck-profile opts [60 20 0] [70 35 400])
-         (translate [0 220 0]))))
+         (translate [0 180 0]))))
 
 (defn render!
   [file-name part]
@@ -127,11 +123,10 @@
 
 (render! "neck" (neck {:pretty? false}))
 
-(render! "scratch" (headstock-neck-joint {:joint-width 60 :headstock-width 60 :headstock-height 20
-                                          :headstock-tilt-degs 5
-                                          :neck-width 60 :neck-height 20
-                                          :cut-radius 50
-                                          }))
+(render! "scratch" (headstock-neck-joint {:joint-width 50 :headstock-width 60
+            :headstock-height 16 :headstock-tilt-degs 5
+            :lump-height 50
+            :neck-width 60 :neck-height 20 :cut-radius 20 }))
 
 (defn -main
   "I don't do a whole lot ... yet."

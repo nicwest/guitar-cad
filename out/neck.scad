@@ -1,12 +1,12 @@
 union () {
-  translate ([0, 160, 0]) {
+  translate ([0, 150, 0]) {
     rotate (a=5.0, v=[1, 0, 0]) {
-      translate ([0, -160, 0]) {
+      translate ([0, -150, 0]) {
         translate ([0, 0, -8]) {
           difference () {
             difference () {
               linear_extrude (height=16, center=true){
-                polygon (points=[[-21, 0], [21, 0], [50, 150], [30, 150], [30, 170], [-30, 170], [-30, 150], [-50, 150]]);
+                polygon (points=[[-21, 0], [21, 0], [50, 150], [-50, 150]]);
               }
               translate ([50, 150, ]) {
                 resize ([40, 60, 20]){
@@ -51,25 +51,25 @@ union () {
       }
     }
   }
-  translate ([0, 160, 0]) {
+  translate ([0, 150, 0]) {
     difference () {
       hull () {
         rotate (a=5.0, v=[1, 0, 0]) {
-          translate ([0, 0, -15/2]) {
-            cube ([60, 1, 15], center=true);
+          translate ([0, 0, -8]) {
+            cube ([60, 1, 16], center=true);
           }
         }
-        translate ([0, 36, 0]) {
+        translate ([0, 6, 0]) {
           rotate (a=-90.0, v=[1, 0, 0]) {
             difference () {
-              cylinder (h=1, r=30, center=true);
-              translate ([0, -30, 0]) {
+              cylinder (h=1, r=25, center=true);
+              translate ([0, -25, 0]) {
                 cube ([60, 60, 2], center=true);
               }
             }
           }
         }
-        translate ([0, 60, 0]) {
+        translate ([0, 30, 0]) {
           resize ([60, 1, 20]){
             rotate (a=-90.0, v=[1, 0, 0]) {
               difference () {
@@ -82,14 +82,14 @@ union () {
           }
         }
       }
-      translate ([0, 0, -65]) {
+      translate ([0, 0, -31]) {
         rotate (a=90.0, v=[0, 1, 0]) {
-          cylinder (h=60, r=50, center=true);
+          cylinder (h=60, r=15, center=true);
         }
       }
     }
   }
-  translate ([0, 220, 0]) {
+  translate ([0, 180, 0]) {
     hull () {
       translate ([0, 0, 0]) {
         resize ([60, 1, 20]){
