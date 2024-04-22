@@ -110,6 +110,27 @@
     (->> (neck-profile opts [60 20 0] [70 35 400])
          (translate [0 180 0]))))
 
+(defn gauge->mm
+  [n]
+  (* n 25.4))
+
+
+(defn nut
+  [{:keys [neck-width nut-width nut-height pretty?
+           strings string-spacing]}]
+  (let [offset (-> strings
+                   (count)
+                   (- 1)
+                   (/ 2)
+                   (* string-spacing)
+                   (-)) ]
+             (union
+               (cube neck-width nut-width nut-height)
+               (for [[i r] (map-indexed #(vector %1 (gauge->mm %2)) strings)]
+                 (->> (cylinder r (* 2 nut-width))
+                      (rotate (deg->rads 90) [1 0 0])
+                      (translate [(+ offset (* i string-spacing)) 0 0]))))))
+
 (defn render!
   [file-name part]
   (let [file-path (str "out/" file-name ".scad")]
@@ -117,16 +138,23 @@
     (spit file-path
           (write-scad part))))
 
+(def default-config
+  {:pretty? false
+   :strings [0.010 0.013 0.017 0.030 0.042 0.052]
+   :scale-length 22
+   :fretboard-radius [[0 254] [22 406]]
+   :neck-radius [[0 60] [0 70]]
+   :neck-wdith [[0 60] [0 70]]})
+
 (render! "headstock" (headstock {:pretty? false}))
 
 (render! "neck-profile" (neck-profile {:pretty? false} [40 10 0] [50 15 200]))
 
 (render! "neck" (neck {:pretty? false}))
 
-(render! "scratch" (headstock-neck-joint {:joint-width 50 :headstock-width 60
-            :headstock-height 16 :headstock-tilt-degs 5
-            :lump-height 50
-            :neck-width 60 :neck-height 20 :cut-radius 20 }))
+(render! "scratch" (nut {:pretty? false :neck-width 60 :nut-width 6 :nut-height 6
+                         :strings [0.010 0.013 0.017 0.030 0.042 0.052]
+                         :string-spacing 7}))
 
 (defn -main
   "I don't do a whole lot ... yet."
