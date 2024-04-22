@@ -12,21 +12,25 @@
 
 (defn headstock-base
   [{:keys [pretty?]}]
-  (let [raw-shape 
+  (let [height (if pretty? 12 16)
+        topx (if pretty? 19 21)
+        bottomx (if pretty? 46 50)
+        neckx (if pretty? 28 30)
+        raw-shape 
         (difference
-          (extrude-linear {:height 15} 
-                          (polygon [[-21 0]
-                                    [21 0]
-                                    [50 150]
-                                    [30 150]
-                                    [30 170]
-                                    [-30 170]
-                                    [-30 150]
-                                    [-50 150]]))
-          (translate [50 150]
+          (extrude-linear {:height height} 
+                          (polygon [[(- topx) 0]
+                                    [topx 0]
+                                    [bottomx 150]
+                                    [neckx 150]
+                                    [neckx 170]
+                                    [(- neckx) 170]
+                                    [(- neckx) 150]
+                                    [(- bottomx) 150]]))
+          (translate [bottomx 150]
                      (resize [40 60 20]
                              (cylinder 20 20)))
-          (translate [-50 150]
+          (translate [(- bottomx) 150]
                      (resize [40 60 20]
                              (cylinder 20 20))))]
     (if pretty? 
@@ -44,12 +48,13 @@
 
 (defn headstock
   [{:keys [pretty?]}]
+  (translate [0 0 -8]
   (difference
     (headstock-base {:pretty? pretty?})
     machine-head-holes
     (mirror [1 0 0] machine-head-holes)
     (translate [0 170 0]
-      (cube 100 20 40))))
+      (cube 100 20 40)))))
 
 (defn neck-profile-base
   [{:keys [pretty?]}]
@@ -66,9 +71,48 @@
   [{:keys [pretty?]} & cross-sections]
   (hull
     (for [[w h y] cross-sections]
-        (translate [0 y 0]
-               (resize [w 1 h]
-                       (neck-profile-base {:pretty? pretty?}))))))
+      (->> (neck-profile-base {:pretty? pretty?})
+           (resize [w 1 h])
+           (translate [0 y 0])))))
+
+(defn deg->rads [n] (* n (/ Math/PI 180)))
+
+(defn headstock-neck-joint
+  [{:keys [joint-width headstock-width headstock-height headstock-tilt-degs
+           neck-width neck-height pretty? cut-radius]}]
+  (difference
+    (hull
+      (->> (cube headstock-width 1 headstock-height)
+           (translate [0 0 (- (/ headstock-height 2))])
+           (rotate (deg->rads headstock-tilt-degs) [1 0 0]))
+      (->> (difference 
+             (cylinder (/ headstock-width 2) 1)
+             (translate [0 (- (/ headstock-width 2)) 0]
+                        (cube headstock-width headstock-width 2)))
+           (rotate (deg->rads -90) [1 0 0])
+           (translate [0 (* joint-width 3/5) 0]))
+      (->> (neck-profile-base {:pretty? pretty?})
+           (resize [neck-width 1 neck-height])
+           (translate [0 joint-width 0])))
+    (->> (cylinder cut-radius headstock-width)
+         (rotate (deg->rads 90) [0 1 0])
+         (translate [0 0 (- 0 cut-radius headstock-height)])))
+  )
+
+(defn neck
+  [opts]
+  (union
+    (->> (headstock opts)
+         (translate [0 -160 0])
+         (rotate (deg->rads 5) [1 0 0])
+         (translate [0 160 0]))
+    (->> (headstock-neck-joint {:joint-width 60 :headstock-width 60
+                                :headstock-height 15 :headstock-tilt-degs 5
+                                :neck-width 60 :neck-height 20
+                               :cut-radius 50 })
+         (translate [0 120 0]))
+    (->> (neck-profile opts [60 20 0] [70 35 400])
+         (translate [0 220 0]))))
 
 (defn render!
   [file-name part]
@@ -77,11 +121,17 @@
     (spit file-path
           (write-scad part))))
 
-(render! "headstock" (headstock {:pretty? true}))
+(render! "headstock" (headstock {:pretty? false}))
 
-(render! "neck-profile" (neck-profile {:pretty? true} [40 10 0] [50 15 200]))
+(render! "neck-profile" (neck-profile {:pretty? false} [40 10 0] [50 15 200]))
 
-(render! "scratch" (neck-profile {:pretty? true} [40 10 0] [50 15 200]))
+(render! "neck" (neck {:pretty? false}))
+
+(render! "scratch" (headstock-neck-joint {:joint-width 60 :headstock-width 60 :headstock-height 20
+                                          :headstock-tilt-degs 5
+                                          :neck-width 60 :neck-height 20
+                                          :cut-radius 50
+                                          }))
 
 (defn -main
   "I don't do a whole lot ... yet."
