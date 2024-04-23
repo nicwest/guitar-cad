@@ -30,26 +30,26 @@
   (with-fn 1000
   (->> (cylinder radius 1)
        (rotate (degrees 90) [1 0 0])
-       (translate [0 0 (- radius)]))))
+       (translate [0 1/2 (- radius)]))))
 
-(defn fretboard-cutter
-  [{:keys [fretboard-width fret-spacing fretboard-height fretboard-end-padding]}]
+(defn cutter
+  [{:keys [fretboard-width fret-spacing fretboard-height fretboard-end-padding]} height]
   (let [fret-zero-y (first fret-spacing)
         fret-last-y (- (last fret-spacing) fretboard-end-padding)
-        fret-zero-x (/ (last (first fretboard-width)) 2)
-        fret-last-x (/ (last (last fretboard-width)) 2)]
-    (->> (extrude-linear {:height fretboard-height}
+        fret-zero-x (/ (first fretboard-width) 2)
+        fret-last-x (/ (last fretboard-width) 2)]
+    (->> (extrude-linear {:height height}
                     (polygon [[(- fret-zero-x) fret-zero-y]
                               [fret-zero-x fret-zero-y]
                               [fret-last-x fret-last-y]
                               [(- fret-last-x) fret-last-y] ]))
-         (translate [0 0 (- (/ fretboard-height 2))]))))
+         (translate [0 0 (- (/ height 2))]))))
 
 (defn fretboard
   [{:keys [fretboard-radius fretboard-height fret-tang-height fret-tang-width
            fret-spacing fretboard-end-padding] :as opts}]
   (intersection
-    (fretboard-cutter opts)
+    (cutter opts fretboard-height)
     (difference
       (union
         (for [[[f1 r1] [f2 r2]] (drop-last (partition 2 1 fretboard-radius fretboard-radius))]
@@ -72,6 +72,52 @@
         (->> (cube 1000 fret-tang-width fret-tang-height)
              (translate [0 fret (- (/ 2 fret-tang-height))]))))))
 
+(def rounded-neck-profile
+  (intersection
+    (->> (cube 10 1 10)
+         (translate [0 1/2 -5]))
+    (with-fn 250
+             (->> (cylinder 5 1)
+                  (rotate (degrees 90) [1 0 0])))))
+
+(defn neck-profile
+  [{:keys [neck-profiles fret-spacing]}]
+  (union
+        (for [[[f1 p1] [f2 p2]] (drop-last (partition 2 1 neck-profiles neck-profiles))]
+          (hull 
+             (translate [0 (nth fret-spacing f1) 0] p1)
+             (translate [0 (nth fret-spacing f2) 0] p2)))))
+
+(defn cross-section-at
+  [y block]
+  (intersection
+    (translate [0 (+ y 1/2) -500]
+      (cube 1000 1 1000))
+    block))
+
+(defn neck
+  [{:keys [fret-spacing neck-pocket-length neck-pocket-height neck-block-shoulder] :as opts}]
+  (let [neck-prof (neck-profile opts)
+        neck-block (intersection 
+                     (cutter opts neck-pocket-height)
+                     (translate [0 (+ (last fret-spacing) (/ neck-pocket-length 2)) (- (/ neck-pocket-height 2))]
+                                (cube 1000 neck-pocket-length neck-pocket-height)))
+        prof-cross (cross-section-at (+ (last fret-spacing) neck-pocket-length neck-block-shoulder) neck-prof)
+        block-cross (cross-section-at (+ (last fret-spacing) neck-pocket-length) neck-block)]
+
+    (union
+      neck-prof
+      neck-block
+      (hull
+        prof-cross
+        block-cross))))
+
+(defn apes-strong-together
+  [{:keys [fretboard-height] :as opts}]
+  [(translate [0 0 (- fretboard-height)] (neck opts))
+   (fretboard opts)]
+  )
+
 
 (defn config
   ([] (config {}))
@@ -83,10 +129,14 @@
                      :fret-tang-width 3/2
                      :scale-length 648
                      :fretboard-radius [[0 254] [22 406]]
-                     :fretboard-width [[0 60] [22 70]]
+                     :fretboard-width [60 70]
                      :fretboard-height 6
                      :fretboard-end-padding 10
-                     :neck-radius [[0 60] [22 70]]
+                     :neck-profiles [[0 (resize [60 1 15] rounded-neck-profile)]
+                                     [22 (resize [70 1 20] rounded-neck-profile)]]
+                     :neck-block-shoulder 20
+                     :neck-pocket-length 80
+                     :neck-pocket-height 22
                      }
                     opts)
         opts (assoc opts
@@ -98,7 +148,8 @@
     opts)))
 
 
-(render! "scratch" (fretboard (config)))
+(render! "scratch" (neck (config)))
+;(render! "scratch" (apes-strong-together (config)))
 
 (defn -main
   "I don't do a whole lot ... yet."
