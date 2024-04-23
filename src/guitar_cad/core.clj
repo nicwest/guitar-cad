@@ -35,13 +35,15 @@
 (defn cutter
   [{:keys [fretboard-width fret-spacing fretboard-height fretboard-end-padding]} height]
   (let [fret-zero-y (first fret-spacing)
-        fret-last-y (- (last fret-spacing) fretboard-end-padding)
+        fret-last-y (last fret-spacing)
         fret-zero-x (/ (first fretboard-width) 2)
         fret-last-x (/ (last fretboard-width) 2)]
     (->> (extrude-linear {:height height}
                     (polygon [[(- fret-zero-x) fret-zero-y]
                               [fret-zero-x fret-zero-y]
                               [fret-last-x fret-last-y]
+                              [fret-last-x (- fret-last-y fretboard-end-padding)]
+                              [(- fret-last-x) (- fret-last-y fretboard-end-padding)]
                               [(- fret-last-x) fret-last-y] ]))
          (translate [0 0 (- (/ height 2))]))))
 
@@ -170,7 +172,7 @@
                                      [22 (resize [70 1 20] rounded-neck-profile)]]
                      :neck-block-shoulder 35
                      :neck-pocket-length 80
-                     :neck-pocket-height 22
+                     :neck-pocket-height 20
                      :neck-bolt-outer-radius 10
                      :truss-rod-width 7
                      :truss-rod-height 8
@@ -186,8 +188,8 @@
 
 
 ; (render! "scratch" (bolt-holes 40 5 (config)))
- (render! "scratch" (neck (config)))
-;(render! "scratch" (apes-strong-together (config)))
+;(render! "scratch" (neck (config)))
+(render! "scratch" (apes-strong-together (config)))
 
 (defn -main
   "I don't do a whole lot ... yet."
