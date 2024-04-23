@@ -148,6 +148,34 @@
       )
     ))
 
+(defn shuffle-strings
+  ([strings]
+   (shuffle-strings (range (count strings)) [] 1))
+  ([in out i]
+   (cond 
+     (> (count in) 2) (shuffle-strings
+                        (butlast (rest in))
+                        (conj out [i [(first in) (last in)]])
+                        (inc i))
+     :else (conj out [i in]))))
+
+
+(defn tuner-posts
+  [{:keys [scale-length strings nut-width nut-padding tuner-post-radius
+           tuner-post-height tuner-post-spacing]}]
+  (let [start (- (/ nut-width 2) nut-padding (/ tuner-post-radius 2))
+        incrx (/ (- nut-width (* nut-padding 2)) (count strings))
+        incry tuner-post-spacing
+        ]
+  (for [[row holes] (shuffle-strings strings)]
+    (for [hole holes]
+      (->> (cylinder tuner-post-radius tuner-post-height)
+           (translate [(- start (* incrx hole))
+                       (+ scale-length (* incry row))
+                       0])
+           )))))
+
+
 (defn apes-strong-together
   [{:keys [fretboard-height] :as opts}]
   [(translate [0 0 (- fretboard-height)] (neck opts))
@@ -176,6 +204,11 @@
                      :neck-bolt-outer-radius 10
                      :truss-rod-width 7
                      :truss-rod-height 8
+                     :nut-width 60
+                     :nut-padding 3
+                     :tuner-post-radius 3
+                     :tuner-post-height 20
+                     :tuner-post-spacing 35
                      }
                     opts)
         opts (assoc opts
@@ -189,7 +222,8 @@
 
 ; (render! "scratch" (bolt-holes 40 5 (config)))
 ;(render! "scratch" (neck (config)))
-(render! "scratch" (apes-strong-together (config)))
+(render! "scratch" (tuner-posts (config)))
+;(render! "scratch" (apes-strong-together (config)))
 
 (defn -main
   "I don't do a whole lot ... yet."
