@@ -170,12 +170,13 @@
   [{:keys [nut-width tuner-height tuner-width nut-to-tuner-distance strings
            nut-padding neck-material-height fretboard-height
            headstock-overcut-radius headstock-undercut-radius
-           headstock-undercut-height headstock-thickness neck-profiles]
+           headstock-undercut-height headstock-thickness neck-profiles
+           nut-thickness]
     :as opts}]
   (let [half-nut (/ nut-width 2)
         half-strings (Math/ceil (/ (count strings) 2))
         first-corner-x (+ (- half-nut nut-padding) (* tuner-width 0.75)) 
-        first-corner-y (- nut-to-tuner-distance (/ tuner-height 2))
+        first-corner-y nut-to-tuner-distance 
         second-corner-y (+ first-corner-y (* half-strings tuner-height))
         second-corner-x (/ tuner-width 2)]
       (difference
@@ -192,11 +193,11 @@
         (translate [0 0 (- (- neck-material-height headstock-thickness))]
           (->> (cube 1000 1000 1000)
                (translate [0 500 (- 500 fretboard-height)])
-               (translate [0 first-corner-y 0]))
+               (translate [0 nut-thickness 0]))
           (->> (cylinder headstock-overcut-radius 1000)
                (with-fn 1000)
                (rotate (degrees 90) [0 1 0])
-               (translate [0 first-corner-y (- headstock-overcut-radius fretboard-height)])
+               (translate [0 nut-thickness (- headstock-overcut-radius fretboard-height)])
                ))
         (tuner-posts opts)
           ; (->> (cylinder headstock-overcut-radius 1000)
@@ -251,7 +252,7 @@
     (translate [0 scale-length 0]
                (headstock opts))
 
-    (body opts)
+    ;(body opts)
     )
   )
 
@@ -266,24 +267,25 @@
                      :fret-tang-width 3/2
                      :scale-length 648
                      :fretboard-radius [[0 254] [22 406]]
-                     :fretboard-width [60 70]
+                     :fretboard-width [41.3 55.6]
                      :fretboard-height 6
                      :fretboard-end-padding 10
-                     :neck-profiles [[0 (resize [60 1 15] rounded-neck-profile)]
-                                     [22 (resize [70 1 20] rounded-neck-profile)]]
-                     :neck-block-shoulder 35
-                     :neck-pocket-length 80
+                     :neck-profiles [[0 (resize [41.3 1 15] rounded-neck-profile)]
+                                     [22 (resize [55.6 1 20] rounded-neck-profile)]]
+                     :neck-block-shoulder 30
+                     :neck-pocket-length 60
                      :neck-pocket-height 20
                      :neck-bolt-outer-radius 10
                      :neck-material-height 25
                      :truss-rod-width 7
                      :truss-rod-height 8
-                     :nut-width 60
-                     :nut-padding 3
+                     :nut-width 41.3
+                     :nut-padding 2
+                     :nut-thickness 35
                      :tuner-post-radius 5
                      :tuner-post-height 20
                      :tuner-height 25
-                     :tuner-width 20
+                     :tuner-width 10
                      :nut-to-tuner-distance 50
                      :headstock-undercut-radius 50 
                      :headstock-undercut-height 15
