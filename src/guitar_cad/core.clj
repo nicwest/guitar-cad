@@ -148,38 +148,72 @@
       )
     ))
 
-(defn shuffle-strings
-  ([strings]
-   (shuffle-strings (range (count strings)) [] 1))
-  ([in out i]
-   (cond 
-     (> (count in) 2) (shuffle-strings
-                        (butlast (rest in))
-                        (conj out [i [(first in) (last in)]])
-                        (inc i))
-     :else (conj out [i in]))))
 
 
 (defn tuner-posts
-  [{:keys [scale-length strings nut-width nut-padding tuner-post-radius
-           tuner-post-height tuner-post-spacing]}]
-  (let [start (- (/ nut-width 2) nut-padding (/ tuner-post-radius 2))
-        incrx (/ (- nut-width (* nut-padding 2)) (count strings))
-        incry tuner-post-spacing
-        ]
-  (for [[row holes] (shuffle-strings strings)]
-    (for [hole holes]
-      (->> (cylinder tuner-post-radius tuner-post-height)
-           (translate [(- start (* incrx hole))
-                       (+ scale-length (* incry row))
-                       0])
-           )))))
+  [{:keys [scale-length strings nut-width tuner-post-radius
+           tuner-post-height nut-padding tuner-height
+           nut-to-tuner-distance]}]
+  (let [nut-minus-padding (- nut-width nut-padding nut-padding)
+        incrx (/ nut-minus-padding (dec (count strings)))
+        start (/ nut-minus-padding 2)
+        mid (/ (count strings) 2)
+        half-post (/ 2 tuner-post-radius)]
+    (for [i (range (count strings))]
+      (let [x (- start (* incrx i))
+            x (if (>= i mid) (- x half-post) (+ x half-post))
+            i (if (>= i mid) (- (count strings) (inc i)) i)
+            y (+ scale-length  nut-to-tuner-distance (* i tuner-height))]
+        (translate [x y 0]
+                   (cylinder tuner-post-radius tuner-post-height))))))
+
+(defn headstock 
+  [{:keys [nut-width tuner-height tuner-width nut-to-tuner-distance strings
+           nut-padding neck-material-height fretboard-height
+           headstock-overcut-radius headstock-undercut-radius
+           headstock-undercut-height
+           headstock-thickness]}]
+  (let [half-nut (/ nut-width 2)
+        half-strings (Math/ceil (/ (count strings) 2))
+        first-corner-x (+ (- half-nut nut-padding) (/ tuner-width 2)) 
+        first-corner-y (- nut-to-tuner-distance (/ tuner-height 2))
+        second-corner-y (+ first-corner-y (* half-strings tuner-height))
+        second-corner-x (/ tuner-width 2)]
+      (difference
+        (->> (polygon [[(- half-nut) 0]
+                  [(- first-corner-x) first-corner-y]
+                  [(- second-corner-x) second-corner-y]
+                  [second-corner-x second-corner-y]
+                  [first-corner-x first-corner-y]
+                  [half-nut 0]])
+             (extrude-linear {:height neck-material-height})
+             (translate [0 0 (- 0 (/ neck-material-height 2) fretboard-height)]))
+        (translate [0 0 (- (- neck-material-height headstock-thickness))]
+          (->> (cube 1000 1000 1000)
+               (translate [0 500 (- 500 fretboard-height)])
+               (translate [0 first-corner-y 0]))
+          (->> (cylinder headstock-overcut-radius 1000)
+               (with-fn 1000)
+               (rotate (degrees 90) [0 1 0])
+               (translate [0 first-corner-y (- headstock-overcut-radius fretboard-height)])
+               ))
+          (->> (cylinder headstock-overcut-radius 1000)
+               (with-fn 1000)
+               (rotate (degrees 90) [0 1 0])
+               (translate [0 0 (- 0 headstock-undercut-height  headstock-undercut-radius)])
+               )
+        )))
+
 
 
 (defn apes-strong-together
-  [{:keys [fretboard-height] :as opts}]
+  [{:keys [fretboard-height scale-length] :as opts}]
   [(translate [0 0 (- fretboard-height)] (neck opts))
-   (fretboard opts)]
+   (fretboard opts)
+   (tuner-posts opts)
+   (translate [0 scale-length 0]
+     (headstock opts))
+   ]
   )
 
 
@@ -202,13 +236,21 @@
                      :neck-pocket-length 80
                      :neck-pocket-height 20
                      :neck-bolt-outer-radius 10
+                     :neck-material-height 25
                      :truss-rod-width 7
                      :truss-rod-height 8
                      :nut-width 60
                      :nut-padding 3
                      :tuner-post-radius 3
                      :tuner-post-height 20
-                     :tuner-post-spacing 35
+                     :tuner-height 30
+                     :tuner-width 30
+                     :nut-to-tuner-distance 50
+                     :headstock-undercut-radius 50 
+                     :headstock-undercut-height 22
+                     :headstock-overcut-radius 50
+
+                     :headstock-thickness 18
                      }
                     opts)
         opts (assoc opts
@@ -216,14 +258,15 @@
                     (into [] (map-indexed calc-fret-spacing
                                                (repeat
                                                  (+ 1 (:frets opts))
-                                                 (:scale-length opts)))))]
+                                                 (:scale-length opts))))) ]
+
     opts)))
 
 
 ; (render! "scratch" (bolt-holes 40 5 (config)))
 ;(render! "scratch" (neck (config)))
-(render! "scratch" (tuner-posts (config)))
-;(render! "scratch" (apes-strong-together (config)))
+;(render! "scratch" (tuner-posts (config)))
+(render! "scratch" (apes-strong-together (config)))
 
 (defn -main
   "I don't do a whole lot ... yet."
